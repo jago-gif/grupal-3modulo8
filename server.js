@@ -3,6 +3,11 @@ import mysql from "mysql2/promise";
 import multer from "multer";
 import sharp from "sharp";
 import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const port = 3000;
