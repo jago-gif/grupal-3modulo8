@@ -3,6 +3,7 @@ import mysql from "mysql2/promise";
 import multer from "multer";
 import sharp from "sharp";
 import path from "path";
+import jwt from "jsonwebtoken";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -20,6 +21,8 @@ const dbConfig = {
   database: "joyeria",
 };
 
+app.use(express.json());
+
 // Crear una conexión a la base de datos
 const pool = mysql.createPool(dbConfig);
 
@@ -27,8 +30,36 @@ const pool = mysql.createPool(dbConfig);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+app.get("/hola", (req, res) => {
+  res.send("hola")
+});
+
+app.post("/login", (req, res) => {
+  const id = req.body.id;
+  console.log(id)
+  jwt.sign(id, "secret_key", (err, token) => {
+    if (err) {
+      res.status(400).send({ msg: "Error" });
+    } else {
+      res.send({ msg: "success", token: token });
+    }
+  });
+});
+
+function verifyToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token == null) return res.sendStatus(403);
+  jwt.verify(token, "secret_key", (err, user) => {
+    if (err) return res.sendStatus(404);
+    req.user = user;
+    next();
+  });
+}
+
+
 // Ruta para subir una imagen a una joya
-app.post("/jewel/images/:id", upload.single("image"), async (req, res) => {
+app.post("/jewel/images/:id", upload.single("image"), verifyToken, async (req, res) => {
   const jewelId = req.params.id;
 
   if (
